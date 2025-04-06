@@ -1,10 +1,15 @@
 import { Ctx, Message, On, Start, Update } from 'nestjs-telegraf';
 import { Scenes, Telegraf } from 'telegraf';
+import { ConfigService } from '@nestjs/config';
+import { ChatgptService } from 'src/chatgpt/chatgpt.service';
 
 type Context = Scenes.SceneContext;
 
 @Update()
 export class TelegramService extends Telegraf<Context> {
+  constructor(private readonly configService: ConfigService, private readonly gptService: ChatgptService) {
+    super(configService.getOrThrow('TELEGRAM_API'));
+  }
   @Start()
   onStart(@Ctx() ctx: Context) {
     ctx.replyWithHTML(`
@@ -15,8 +20,7 @@ export class TelegramService extends Telegraf<Context> {
   }
 
   @On('text')
-  onMessage(@Message('text') message: string, @Ctx() ctx: Context) {
-      
-      
+  onMessage(@Message('text') message: string) {
+      return this.gptService.generateResponse(message);
   }
 }
